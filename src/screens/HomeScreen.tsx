@@ -21,16 +21,17 @@ const whenOptions: { label: string; value: MealContext }[] = [
   { label: 'Other', value: 'other' },
 ];
 
-const defaultNoteOptions = ['Stressed', 'Skipped meal', 'Exercised'];
+const presetNotes = ['Stressed', 'Skipped meal', 'Exercised'];
 
 export default function HomeScreen() {
   const [readings, setReadings] = useState<GlucoseReading[]>([]);
   const [value, setValue] = useState(100);
+  const [editingValue, setEditingValue] = useState(false);
+  const [valueDraft, setValueDraft] = useState('');
   const [when, setWhen] = useState<MealContext>('fasting');
-  const [noteOptions, setNoteOptions] = useState(defaultNoteOptions);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [addingNote, setAddingNote] = useState(false);
-  const [customNoteText, setCustomNoteText] = useState('');
+  const [customNote, setCustomNote] = useState('');
   const [timestamp, setTimestamp] = useState(() => new Date());
   const [justSaved, setJustSaved] = useState(false);
 
@@ -40,22 +41,31 @@ export default function HomeScreen() {
     );
   };
 
-  const confirmCustomNote = () => {
-    const trimmed = customNoteText.trim();
-    if (trimmed && !noteOptions.includes(trimmed)) {
-      setNoteOptions((prev) => [...prev, trimmed]);
-      setSelectedNotes((prev) => [...prev, trimmed]);
+  const startEditingValue = () => {
+    setValueDraft(String(value));
+    setEditingValue(true);
+  };
+
+  const commitValueEdit = () => {
+    const parsed = parseInt(valueDraft, 10);
+    if (!Number.isNaN(parsed)) {
+      setValue(Math.max(0, parsed));
     }
-    setCustomNoteText('');
+    setEditingValue(false);
+  };
+
+  const commitCustomNote = () => {
+    setCustomNote((prev) => prev.trim());
     setAddingNote(false);
   };
 
   const handleSave = () => {
+    const notes = [...selectedNotes, ...(customNote ? [customNote] : [])];
     const reading: GlucoseReading = {
       id: `${Date.now()}`,
       value,
       context: when,
-      note: selectedNotes.length > 0 ? selectedNotes.join(', ') : undefined,
+      note: notes.length > 0 ? notes.join(', ') : undefined,
       takenAt: timestamp.toISOString(),
     };
     setReadings((prev) => [reading, ...prev]);
@@ -64,6 +74,7 @@ export default function HomeScreen() {
     setTimeout(() => setJustSaved(false), 1500);
 
     setSelectedNotes([]);
+    setCustomNote('');
     setTimestamp(new Date());
   };
 
@@ -90,9 +101,27 @@ export default function HomeScreen() {
                 <Text style={styles.stepperGlyph}>−</Text>
               </Pressable>
 
-              <Text style={[styles.valueText, { color: glucoseStatusColor(value) }]}>
-                {value}
-              </Text>
+              {editingValue ? (
+                <TextInput
+                  style={[styles.valueText, styles.valueInput]}
+                  value={valueDraft}
+                  onChangeText={setValueDraft}
+                  onSubmitEditing={commitValueEdit}
+                  onBlur={commitValueEdit}
+                  keyboardType="number-pad"
+                  returnKeyType="done"
+                  selectTextOnFocus
+                  maxLength={4}
+                  underlineColorAndroid="transparent"
+                  autoFocus
+                />
+              ) : (
+                <Pressable onPress={startEditingValue} hitSlop={8}>
+                  <Text style={[styles.valueText, { color: glucoseStatusColor(value) }]}>
+                    {value}
+                  </Text>
+                </Pressable>
+              )}
 
               <Pressable
                 style={styles.stepperButton}
@@ -128,7 +157,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Note (optional)</Text>
             <View style={styles.chipRow}>
-              {noteOptions.map((note) => {
+              {presetNotes.map((note) => {
                 const selected = selectedNotes.includes(note);
                 return (
                   <Pressable
@@ -140,23 +169,37 @@ export default function HomeScreen() {
                   </Pressable>
                 );
               })}
-              <Pressable
-                onPress={() => setAddingNote((prev) => !prev)}
-                style={[styles.chip, styles.chipOutlined]}
-              >
-                <Text style={styles.chipAddText}>+ Add</Text>
-              </Pressable>
+
+              {customNote && !addingNote ? (
+                <View style={[styles.chip, styles.customNoteChip]}>
+                  <Pressable onPress={() => setAddingNote(true)}>
+                    <Text style={styles.customNoteChipText} numberOfLines={1}>
+                      {customNote}
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={() => setCustomNote('')} hitSlop={8}>
+                    <Text style={styles.customNoteChipClearText}>×</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => setAddingNote((prev) => !prev)}
+                  style={[styles.chip, styles.chipOutlined]}
+                >
+                  <Text style={styles.chipAddText}>+ Add</Text>
+                </Pressable>
+              )}
             </View>
 
             {addingNote && (
               <TextInput
                 style={styles.customNoteInput}
-                placeholder="Type a note and press return"
+                placeholder="Type a note for this reading"
                 placeholderTextColor={colors.soft}
-                value={customNoteText}
-                onChangeText={setCustomNoteText}
-                onSubmitEditing={confirmCustomNote}
-                onBlur={confirmCustomNote}
+                value={customNote}
+                onChangeText={setCustomNote}
+                onSubmitEditing={commitCustomNote}
+                onBlur={commitCustomNote}
                 returnKeyType="done"
                 autoFocus
               />
@@ -233,6 +276,10 @@ const styles = StyleSheet.create({
     minWidth: 160,
     textAlign: 'center',
   },
+  valueInput: {
+    padding: 0,
+    color: colors.ink,
+  },
   valueUnit: {
     fontFamily: fonts.medium,
     fontSize: 13,
@@ -287,6 +334,25 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 15,
     color: colors.sage,
+  },
+  customNoteChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderStyle: 'dashed',
+    borderColor: colors.sage,
+    backgroundColor: colors.paper,
+  },
+  customNoteChipText: {
+    fontFamily: fonts.medium,
+    fontSize: 15,
+    color: colors.ink,
+    maxWidth: 140,
+  },
+  customNoteChipClearText: {
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    color: colors.soft,
   },
   customNoteInput: {
     marginTop: 12,
