@@ -47,12 +47,12 @@ export default function AppNavigator() {
         <Stack.Screen name="Tabs" component={Tabs} />
         <Stack.Screen name="Trends">
           {({ navigation }) => (
-            <ComingSoonScreen title="Trends" onBack={() => navigation.goBack()} />
+            <ComingSoonScreen title="My Trends" onBack={() => navigation.goBack()} />
           )}
         </Stack.Screen>
         <Stack.Screen name="History">
           {({ navigation }) => (
-            <ComingSoonScreen title="History" onBack={() => navigation.goBack()} />
+            <ComingSoonScreen title="My History" onBack={() => navigation.goBack()} />
           )}
         </Stack.Screen>
       </Stack.Navigator>

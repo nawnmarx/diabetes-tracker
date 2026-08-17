@@ -75,31 +75,35 @@ export default function DashboardScreen({ navigation, route }: Props) {
           )}
 
           <View style={styles.statsRow}>
-            <Pressable
-              style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
-              onPress={() => navigation.navigate('Trends')}
-            >
+            <View style={styles.statCard}>
               <Text style={styles.statLabel}>In range</Text>
               <Text style={styles.statValue}>{inRangePct !== null ? `${inRangePct}%` : '–'}</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
-              onPress={() => navigation.navigate('Trends')}
-            >
+            </View>
+            <View style={styles.statCard}>
               <Text style={styles.statLabel}>Avg</Text>
               <Text style={styles.statValue}>{avgValue !== null ? avgValue : '–'}</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
-              onPress={() => navigation.navigate('History')}
-            >
+            </View>
+            <View style={styles.statCard}>
               <Text style={styles.statLabel}>Logged</Text>
               <Text style={styles.statValue}>{loggedCount}</Text>
-            </Pressable>
+            </View>
           </View>
 
+          <Pressable
+            onPress={() => navigation.navigate('Trends')}
+            style={styles.trendsLinkRow}
+            hitSlop={8}
+          >
+            <Text style={styles.sectionLink}>View trends →</Text>
+          </Pressable>
+
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Recent</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionLabel}>Recent</Text>
+              <Pressable onPress={() => navigation.navigate('History')} hitSlop={8}>
+                <Text style={styles.sectionLink}>View full history →</Text>
+              </Pressable>
+            </View>
             {readings.slice(0, RECENT_LIMIT).map((reading) => (
               <Pressable
                 key={reading.id}
@@ -216,9 +220,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  statCardPressed: {
-    backgroundColor: colors.sageTint,
-  },
   statLabel: {
     fontFamily: fonts.semiBold,
     fontSize: 11,
@@ -233,8 +234,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.ink,
   },
+  trendsLinkRow: {
+    alignSelf: 'flex-end',
+    marginBottom: 28,
+  },
+  sectionLink: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.sage,
+  },
   section: {
     marginBottom: 26,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   sectionLabel: {
     fontFamily: fonts.semiBold,
@@ -242,7 +258,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     color: colors.soft,
-    marginBottom: 12,
   },
   recentRow: {
     flexDirection: 'row',
