@@ -105,11 +105,7 @@ export default function DashboardScreen({ navigation, route }: Props) {
               </Pressable>
             </View>
             {readings.slice(0, RECENT_LIMIT).map((reading) => (
-              <Pressable
-                key={reading.id}
-                style={({ pressed }) => [styles.recentRow, pressed && styles.recentRowPressed]}
-                onPress={() => navigation.navigate('History')}
-              >
+              <View key={reading.id} style={styles.recentRow}>
                 <View style={[styles.recentDot, { backgroundColor: glucoseDotColor(reading.value) }]} />
                 <View style={styles.recentDetails}>
                   <Text style={styles.recentValue}>{reading.value} mg/dL</Text>
@@ -122,7 +118,7 @@ export default function DashboardScreen({ navigation, route }: Props) {
                     </Text>
                   )}
                 </View>
-              </Pressable>
+              </View>
             ))}
           </View>
         </ScrollView>
@@ -268,9 +264,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
-  },
-  recentRowPressed: {
-    backgroundColor: colors.sageTint,
   },
   recentDot: {
     width: 10,
