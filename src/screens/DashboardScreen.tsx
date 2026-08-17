@@ -8,7 +8,13 @@ import { mealContextLabel } from '../constants/mealOptions';
 import { colors, fonts } from '../constants/theme';
 import { useReadings } from '../context/ReadingsContext';
 import { RootStackParamList, TabParamList } from '../navigation/types';
-import { formatQuickTimestamp, glucoseDotColor, isInRange, isSameDay } from '../utils/glucose';
+import {
+  formatFullDate,
+  formatQuickTimestamp,
+  glucoseDotColor,
+  isInRange,
+  isSameDay,
+} from '../utils/glucose';
 
 const RECENT_LIMIT = 10;
 const BANNER_DURATION_MS = 4000;
@@ -43,11 +49,7 @@ export default function DashboardScreen({ navigation, route }: Props) {
       : null;
 
   const today = new Date();
-  const dateLabel = today.toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
+  const dateLabel = formatFullDate(today);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
