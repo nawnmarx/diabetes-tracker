@@ -1,3 +1,4 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -10,21 +11,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { whenOptions } from '../constants/mealOptions';
 import { colors, fonts } from '../constants/theme';
+import { useReadings } from '../context/ReadingsContext';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { GlucoseReading, MealContext } from '../types';
 import { formatQuickTimestamp, glucoseStatusColor } from '../utils/glucose';
 
-const whenOptions: { label: string; value: MealContext }[] = [
-  { label: 'Fasting', value: 'fasting' },
-  { label: 'Before meal', value: 'before_meal' },
-  { label: 'After meal', value: 'after_meal' },
-  { label: 'Other', value: 'other' },
-];
-
 const presetNotes = ['Stressed', 'Skipped meal', 'Exercised'];
 
-export default function HomeScreen() {
-  const [readings, setReadings] = useState<GlucoseReading[]>([]);
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+
+export default function HomeScreen({ navigation }: Props) {
+  const { addReading } = useReadings();
   const [value, setValue] = useState(100);
   const [editingValue, setEditingValue] = useState(false);
   const [valueDraft, setValueDraft] = useState('');
@@ -33,7 +32,6 @@ export default function HomeScreen() {
   const [addingNote, setAddingNote] = useState(false);
   const [customNote, setCustomNote] = useState('');
   const [timestamp, setTimestamp] = useState(() => new Date());
-  const [justSaved, setJustSaved] = useState(false);
 
   const toggleNote = (note: string) => {
     setSelectedNotes((prev) =>
@@ -68,14 +66,13 @@ export default function HomeScreen() {
       note: notes.length > 0 ? notes.join(', ') : undefined,
       takenAt: timestamp.toISOString(),
     };
-    setReadings((prev) => [reading, ...prev]);
-
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 1500);
+    addReading(reading);
 
     setSelectedNotes([]);
     setCustomNote('');
     setTimestamp(new Date());
+
+    navigation.navigate('Dashboard', { justLoggedId: reading.id });
   };
 
   return (
@@ -89,6 +86,9 @@ export default function HomeScreen() {
             <Text style={styles.timestampText}>
               {formatQuickTimestamp(timestamp)} <Text style={styles.timestampEdit}>· edit</Text>
             </Text>
+            <Pressable onPress={() => navigation.navigate('Dashboard')} hitSlop={8}>
+              <Text style={styles.viewLogLink}>View log →</Text>
+            </Pressable>
           </View>
 
           <View style={styles.valueSection}>
@@ -206,8 +206,8 @@ export default function HomeScreen() {
             )}
           </View>
 
-          <Pressable style={styles.saveButton} onPress={handleSave} disabled={justSaved}>
-            <Text style={styles.saveButtonText}>{justSaved ? 'Saved' : 'Save reading'}</Text>
+          <Pressable style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Save reading</Text>
           </Pressable>
 
           <Text style={styles.footerText}>No ads. No premium lock.</Text>
@@ -232,7 +232,9 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   timestampRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   timestampText: {
@@ -242,6 +244,11 @@ const styles = StyleSheet.create({
   },
   timestampEdit: {
     fontFamily: fonts.medium,
+    color: colors.sage,
+  },
+  viewLogLink: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
     color: colors.sage,
   },
   valueSection: {

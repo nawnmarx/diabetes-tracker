@@ -1,5 +1,6 @@
 export const colors = {
   paper: '#F6F4EF',
+  card: '#FFFFFF',
   ink: '#24312B',
   soft: '#5B6B62',
   sage: '#4F7A68',
@@ -19,6 +20,10 @@ export const fonts = {
 };
 
 export const glucoseRange = {
+  // sage: in range
   lowMax: 70,
   highMin: 180,
+  // rust: critical, beyond amber borderline bands
+  criticalLowMax: 54,
+  criticalHighMin: 250,
 };

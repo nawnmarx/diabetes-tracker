@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/constants/theme';
+import { ReadingsProvider } from './src/context/ReadingsContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -25,8 +26,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AppNavigator />
-      <StatusBar style="dark" />
+      <ReadingsProvider>
+        <AppNavigator />
+        <StatusBar style="dark" />
+      </ReadingsProvider>
     </SafeAreaProvider>
   );
 }
