@@ -1,3 +1,5 @@
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -5,13 +7,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { mealContextLabel } from '../constants/mealOptions';
 import { colors, fonts } from '../constants/theme';
 import { useReadings } from '../context/ReadingsContext';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { RootStackParamList, TabParamList } from '../navigation/types';
 import { formatQuickTimestamp, glucoseDotColor, isInRange, isSameDay } from '../utils/glucose';
 
 const RECENT_LIMIT = 10;
 const BANNER_DURATION_MS = 4000;
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, 'Home'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export default function DashboardScreen({ navigation, route }: Props) {
   const { readings } = useReadings();
@@ -45,7 +50,7 @@ export default function DashboardScreen({ navigation, route }: Props) {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.headerTitle}>Today</Text>
@@ -68,32 +73,50 @@ export default function DashboardScreen({ navigation, route }: Props) {
           )}
 
           <View style={styles.statsRow}>
-            <View style={styles.statCard}>
+            <Pressable
+              style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+              onPress={() => navigation.navigate('Trends')}
+            >
               <Text style={styles.statLabel}>In range</Text>
               <Text style={styles.statValue}>{inRangePct !== null ? `${inRangePct}%` : '–'}</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+              onPress={() => navigation.navigate('Trends')}
+            >
               <Text style={styles.statLabel}>Avg</Text>
               <Text style={styles.statValue}>{avgValue !== null ? avgValue : '–'}</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+              onPress={() => navigation.navigate('History')}
+            >
               <Text style={styles.statLabel}>Logged</Text>
               <Text style={styles.statValue}>{loggedCount}</Text>
-            </View>
+            </Pressable>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Recent</Text>
             {readings.slice(0, RECENT_LIMIT).map((reading) => (
-              <View key={reading.id} style={styles.recentRow}>
+              <Pressable
+                key={reading.id}
+                style={({ pressed }) => [styles.recentRow, pressed && styles.recentRowPressed]}
+                onPress={() => navigation.navigate('History')}
+              >
                 <View style={[styles.recentDot, { backgroundColor: glucoseDotColor(reading.value) }]} />
                 <View style={styles.recentDetails}>
                   <Text style={styles.recentValue}>{reading.value} mg/dL</Text>
                   <Text style={styles.recentMeta}>
                     {mealContextLabel(reading.context)} · {formatQuickTimestamp(new Date(reading.takenAt))}
                   </Text>
+                  {reading.note && (
+                    <Text style={styles.recentNote} numberOfLines={1}>
+                      {reading.note}
+                    </Text>
+                  )}
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         </ScrollView>
@@ -107,8 +130,9 @@ export default function DashboardScreen({ navigation, route }: Props) {
         </View>
       )}
 
-      <Pressable style={styles.fab} onPress={() => navigation.navigate('Home')} hitSlop={8}>
+      <Pressable style={styles.fab} onPress={() => navigation.navigate('QuickLog')} hitSlop={8}>
         <Text style={styles.fabGlyph}>+</Text>
+        <Text style={styles.fabLabel}>Quick Log</Text>
       </Pressable>
     </SafeAreaView>
   );
@@ -190,6 +214,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
+  statCardPressed: {
+    backgroundColor: colors.sageTint,
+  },
   statLabel: {
     fontFamily: fonts.semiBold,
     fontSize: 11,
@@ -225,6 +252,9 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
   },
+  recentRowPressed: {
+    backgroundColor: colors.sageTint,
+  },
   recentDot: {
     width: 10,
     height: 10,
@@ -243,6 +273,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 13,
     color: colors.soft,
+    marginTop: 2,
+  },
+  recentNote: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.soft,
+    fontStyle: 'italic',
     marginTop: 2,
   },
   emptyState: {
@@ -278,12 +315,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 24,
     bottom: 24,
-    width: 56,
-    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 22,
     borderRadius: 28,
     backgroundColor: colors.deepSage,
-    alignItems: 'center',
-    justifyContent: 'center',
     shadowColor: colors.ink,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -292,8 +330,13 @@ const styles = StyleSheet.create({
   },
   fabGlyph: {
     fontFamily: fonts.regular,
-    fontSize: 28,
+    fontSize: 20,
     color: '#FFFFFF',
-    lineHeight: 30,
+    lineHeight: 22,
+  },
+  fabLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: '#FFFFFF',
   },
 });

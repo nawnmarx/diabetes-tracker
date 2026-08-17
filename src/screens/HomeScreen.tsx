@@ -1,4 +1,4 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -14,13 +14,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { whenOptions } from '../constants/mealOptions';
 import { colors, fonts } from '../constants/theme';
 import { useReadings } from '../context/ReadingsContext';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { TabParamList } from '../navigation/types';
 import { GlucoseReading, MealContext } from '../types';
 import { formatQuickTimestamp, glucoseStatusColor } from '../utils/glucose';
 
-const presetNotes = ['Stressed', 'Skipped meal', 'Exercised'];
+const initialPresetNotes = ['Stressed', 'Skipped meal', 'Exercised'];
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = BottomTabScreenProps<TabParamList, 'QuickLog'>;
 
 export default function HomeScreen({ navigation }: Props) {
   const { addReading } = useReadings();
@@ -28,9 +28,11 @@ export default function HomeScreen({ navigation }: Props) {
   const [editingValue, setEditingValue] = useState(false);
   const [valueDraft, setValueDraft] = useState('');
   const [when, setWhen] = useState<MealContext>('fasting');
+  const [presetNotes, setPresetNotes] = useState(initialPresetNotes);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [addingNote, setAddingNote] = useState(false);
   const [customNote, setCustomNote] = useState('');
+  const [saveAsPreset, setSaveAsPreset] = useState(false);
   const [timestamp, setTimestamp] = useState(() => new Date());
 
   const toggleNote = (note: string) => {
@@ -53,7 +55,17 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const commitCustomNote = () => {
-    setCustomNote((prev) => prev.trim());
+    const trimmed = customNote.trim();
+    if (trimmed && saveAsPreset) {
+      if (!presetNotes.includes(trimmed)) {
+        setPresetNotes((prev) => [...prev, trimmed]);
+      }
+      setSelectedNotes((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+      setCustomNote('');
+    } else {
+      setCustomNote(trimmed);
+    }
+    setSaveAsPreset(false);
     setAddingNote(false);
   };
 
@@ -72,11 +84,11 @@ export default function HomeScreen({ navigation }: Props) {
     setCustomNote('');
     setTimestamp(new Date());
 
-    navigation.navigate('Dashboard', { justLoggedId: reading.id });
+    navigation.navigate('Home', { justLoggedId: reading.id });
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -86,7 +98,7 @@ export default function HomeScreen({ navigation }: Props) {
             <Text style={styles.timestampText}>
               {formatQuickTimestamp(timestamp)} <Text style={styles.timestampEdit}>· edit</Text>
             </Text>
-            <Pressable onPress={() => navigation.navigate('Dashboard')} hitSlop={8}>
+            <Pressable onPress={() => navigation.navigate('Home')} hitSlop={8}>
               <Text style={styles.viewLogLink}>View log →</Text>
             </Pressable>
           </View>
@@ -186,23 +198,39 @@ export default function HomeScreen({ navigation }: Props) {
                   onPress={() => setAddingNote((prev) => !prev)}
                   style={[styles.chip, styles.chipOutlined]}
                 >
-                  <Text style={styles.chipAddText}>+ Add</Text>
+                  <Text style={styles.chipAddText}>✎ Add note</Text>
                 </Pressable>
               )}
             </View>
 
             {addingNote && (
-              <TextInput
-                style={styles.customNoteInput}
-                placeholder="Type a note for this reading"
-                placeholderTextColor={colors.soft}
-                value={customNote}
-                onChangeText={setCustomNote}
-                onSubmitEditing={commitCustomNote}
-                onBlur={commitCustomNote}
-                returnKeyType="done"
-                autoFocus
-              />
+              <View style={styles.customNoteEditor}>
+                <TextInput
+                  style={styles.customNoteInput}
+                  placeholder="Type a note for this reading"
+                  placeholderTextColor={colors.soft}
+                  value={customNote}
+                  onChangeText={setCustomNote}
+                  onSubmitEditing={commitCustomNote}
+                  returnKeyType="done"
+                  autoFocus
+                />
+                <Pressable
+                  style={styles.checkboxRow}
+                  onPress={() => setSaveAsPreset((prev) => !prev)}
+                  hitSlop={8}
+                >
+                  <View style={[styles.checkbox, saveAsPreset && styles.checkboxChecked]}>
+                    {saveAsPreset && <Text style={styles.checkboxMark}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxLabel}>
+                    Also save as a quick option for next time
+                  </Text>
+                </Pressable>
+                <Pressable style={styles.noteDoneButton} onPress={commitCustomNote}>
+                  <Text style={styles.noteDoneButtonText}>Done</Text>
+                </Pressable>
+              </View>
             )}
           </View>
 
@@ -361,6 +389,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.soft,
   },
+  customNoteEditor: {
+    marginTop: 4,
+  },
   customNoteInput: {
     marginTop: 12,
     borderWidth: 1.5,
@@ -372,6 +403,50 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.ink,
     backgroundColor: colors.paper,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 14,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.paper,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.sage,
+    borderColor: colors.sage,
+  },
+  checkboxMark: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: fonts.bold,
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.soft,
+  },
+  noteDoneButton: {
+    alignSelf: 'flex-start',
+    marginTop: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: colors.sage,
+  },
+  noteDoneButtonText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
+    color: '#FFFFFF',
   },
   saveButton: {
     backgroundColor: colors.deepSage,
