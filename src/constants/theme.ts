@@ -1,13 +1,21 @@
 export const colors = {
-  background: '#F7F9FC',
-  surface: '#FFFFFF',
-  primary: '#2563EB',
-  text: '#111827',
-  textMuted: '#6B7280',
-  border: '#E5E7EB',
-  low: '#DC2626',
-  inRange: '#16A34A',
-  high: '#D97706',
+  paper: '#F6F4EF',
+  ink: '#24312B',
+  soft: '#5B6B62',
+  sage: '#4F7A68',
+  deepSage: '#3C5F50',
+  sageTint: '#E3ECE6',
+  amber: '#C98A3B',
+  rust: '#B5573F',
+  hairline: '#DDD8CC',
+};
+
+export const fonts = {
+  display: 'Fraunces_700Bold',
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
 };
 
 export const glucoseRange = {

@@ -1,4 +1,4 @@
-export type MealContext = 'before_meal' | 'after_meal' | 'fasting' | 'bedtime' | 'other';
+export type MealContext = 'fasting' | 'before_meal' | 'after_meal' | 'other';
 
 export interface GlucoseReading {
   id: string;
